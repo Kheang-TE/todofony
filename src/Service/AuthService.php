@@ -11,16 +11,17 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 class AuthService{
 
     public function __construct(
+        private UserPasswordHasherInterface $hasher,
         private EntityManagerInterface $emi
     ){}
 
-    public function registerUser(RegisterUserDTO $dto, UserPasswordHasherInterface $hasher, ):User{
+    public function registerUser(RegisterUserDTO $dto):User{
 
         $user = new User();
         
         $user->setEmail($dto->email);
         
-        $hashPwd = $hasher->hashPassword($user, $dto->password);
+        $hashPwd = $this->hasher->hashPassword($user, $dto->password);
         $user->setPassword($hashPwd);
 
         $user->setRoles(['ROLE_USER']);

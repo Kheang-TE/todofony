@@ -28,7 +28,7 @@ class EntityListener{
 
         // set createdAt field if new insert
         if(!$entity->getId()){
-            $entity->setCreatedAt(new \DateTimeImmutable());
+            $entity->setCreateAt(new \DateTimeImmutable());
         }
 
     }

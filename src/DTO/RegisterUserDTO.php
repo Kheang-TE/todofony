@@ -8,9 +8,9 @@ class RegisterUserDTO{
 
     #[Assert\Email()]
     #[Assert\NotBlank()]
-    public string $email = null;
+    public ?string $email = null;
 
     #[Assert\NotBlank()]
-    public string $password = null;
+    public ?string $password = null;
 
 }
