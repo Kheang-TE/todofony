@@ -2,6 +2,7 @@
 
 namespace App\EventListener;
 
+use App\Entity\Task;
 use App\Entity\User;
 
 use Doctrine\ORM\Events;
@@ -16,7 +17,7 @@ class EntityListener{
 
         $entity = $args->getObject();
 
-        $entities = [User::class];
+        $entities = [User::class, Task::class];
 
         // control authorized Classes
         if(!in_array(get_class($entity), $entities)){
@@ -28,7 +29,7 @@ class EntityListener{
 
         // set createdAt field if new insert
         if(!$entity->getId()){
-            $entity->setCreateAt(new \DateTimeImmutable());
+            $entity->setCreatedAt(new \DateTimeImmutable());
         }
 
     }

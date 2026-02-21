@@ -14,7 +14,8 @@ lexik_jwt_authentication:
             enabled: true
             name: BEARER # name of the cookie to look for the token
         authorization_header:
-            enabled: false
+            enabled: true
+            prefix: BEARER # prefix in the Authorization header, e.g., "Authorization: BEARER <token>"
 
     set_cookies:
         BEARER:

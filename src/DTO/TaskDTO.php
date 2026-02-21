@@ -10,7 +10,4 @@ class TaskDTO{
     #[Assert\NotBlank()]
     public ?string $title = null;
 
-    #[Assert\NotBlank()]
-    public TaskStatusEnum $status = TaskStatusEnum::TODO;
-
 }

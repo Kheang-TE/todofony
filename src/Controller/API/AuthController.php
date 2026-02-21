@@ -61,7 +61,7 @@ final class AuthController extends AbstractController
 
     // The login route is handled by the security firewall, so we just return an error message here.
     #[Route('/login', name:'login', methods:['POST'])]
-    public function login(Request $request, SerializerInterface $serializer, AuthService $authService): JsonResponse{
+    public function login(): JsonResponse{
 
         // 
         return $this->json([

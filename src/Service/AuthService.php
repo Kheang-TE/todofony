@@ -34,8 +34,12 @@ class AuthService{
         return $formattedErrors;
     }
 
-    public function existingUser(AuthDTO $dto): ?User{
-        return $this->userRepository->findOneBy(['email' => strtolower(trim($dto->email))]);
+    public function existingUser(AuthDTO|User $user): ?User{
+        if($user instanceof AuthDTO){
+            return $this->userRepository->findOneBy(['email' => strtolower(trim($user->email))]);
+        } else if($user instanceof User){
+            return $this->userRepository->findOneBy(['email' => strtolower(trim($user->getEmail()))]);
+        }
     }
 
     public function registerUser(AuthDTO $dto):User{
