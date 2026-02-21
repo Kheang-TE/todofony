@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Model\TaskStatusEnum;
 use App\Repository\TaskRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 class Task
@@ -15,9 +16,11 @@ class Task
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank()]
     private ?string $title = null;
 
     #[ORM\Column(enumType: TaskStatusEnum::class)]
+    #[Assert\NotBlank()]
     private TaskStatusEnum $status;
 
     #[ORM\ManyToOne(inversedBy: 'tasks')]
