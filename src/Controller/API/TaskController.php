@@ -21,17 +21,19 @@ final class TaskController extends AbstractController
 {
 
     public function __construct(
-        private AuthService $authService
+        private AuthService $authService,
+        private SerializerInterface $serializer,
+        private TaskService $taskService
     )
     {}
 
     #[Route('/tasks', name:'task', methods:['GET'])]
-    public function index()
+    public function allTasks()
     {
     }
 
     #[Route('/tasks/create', name:'task_create', methods:['POST'])]
-    public function create(Request $request, SerializerInterface $serializer, TaskService $taskService): JsonResponse{
+    public function create(Request $request): JsonResponse{
 
         // Check if the user is authenticated and exists in the database
         if(!$this->authService->existingUser($this->getUser())){
@@ -43,8 +45,8 @@ final class TaskController extends AbstractController
         try{
 
             // Validate the input data
-            $dto = $serializer->deserialize($request->getContent(), TaskCreateDTO::class, 'json');
-            $errors = $taskService->validationTask($dto);
+            $dto = $this->serializer->deserialize($request->getContent(), TaskCreateDTO::class, 'json');
+            $errors = $this->taskService->validationTask($dto);
             if($errors){
                 return $this->json([
                     'errors' => $errors
@@ -52,7 +54,7 @@ final class TaskController extends AbstractController
             }
 
             // Save the new task
-            $task = $taskService->newTask($dto, $this->getUser());
+            $task = $this->taskService->newTask($dto, $this->getUser());
 
             if($task instanceof JsonResponse){
                 return $task; // Return the error response if validation failed
@@ -76,7 +78,7 @@ final class TaskController extends AbstractController
     }
 
     #[Route('/tasks/edit/{id}', name:'task_edit', methods:['PATCH'], requirements: ['id' => '\d+'])]
-    public function edit(Request $request, SerializerInterface $serializer, TaskService $taskService): JsonResponse{
+    public function edit(Request $request): JsonResponse{
 
         // Check if the user is authenticated and exists in the database
         if(!$this->authService->existingUser($this->getUser()) || !$this->getUser() instanceof User){
@@ -93,8 +95,8 @@ final class TaskController extends AbstractController
             $id = $request->attributes->get('id');
 
             // Validate the input data
-            $dto = $serializer->deserialize($request->getContent(), TaskPatchDTO::class, 'json');
-            $errors = $taskService->validationTask($dto);
+            $dto = $this->serializer->deserialize($request->getContent(), TaskPatchDTO::class, 'json');
+            $errors = $this->taskService->validationTask($dto);
             if($errors){
                 return $this->json([
                     'errors' => $errors
@@ -102,7 +104,7 @@ final class TaskController extends AbstractController
             }
             
             // Check if the task exists
-            $task = $taskService->existingTask($id);
+            $task = $this->taskService->existingTask($id);
             if(!$task){
                 return $this->json([
                     'message' => 'Task not found'
@@ -117,7 +119,7 @@ final class TaskController extends AbstractController
             }
 
             // Edit the task
-            $editTask = $taskService->editTask($task, $dto);
+            $editTask = $this->taskService->editTask($task, $dto);
             if($editTask instanceof JsonResponse){
                 return $editTask; // Return the error response if validation failed
             } else{
