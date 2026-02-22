@@ -21,3 +21,11 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    # Eventlistener for changment in Doctrine 
+    App\EventListener\EntityListener:
+        tags:
+            -
+                name: 'doctrine.event_listener'
+                # this is the only required option for the lifecycle listener tag
+                event: 'prePersist'

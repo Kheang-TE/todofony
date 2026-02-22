@@ -1,0 +1,26 @@
+lexik_jwt_authentication:
+
+    secret_key: '%env(resolve:JWT_SECRET_KEY)%'
+    public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
+    pass_phrase: '%env(JWT_PASSPHRASE)%'
+
+    token_ttl: 3600 # in seconds, default is 3600 -> 1h
+
+    encoder:
+        signature_algorithm: RS256 # HS256, HS384, HS512 (HMAC) / RS256, RS384, RS512 (RSA) / ES256, ES384, ES512 (ECDSA)
+    
+    token_extractors:
+        cookie:
+            enabled: true
+            name: BEARER # name of the cookie to look for the token
+        authorization_header:
+            enabled: true
+            prefix: BEARER # prefix in the Authorization header, e.g., "Authorization: BEARER <token>"
+
+    set_cookies:
+        BEARER:
+            lifetime: 3600 # same as token_ttl
+            samesite: strict # none, lax, strict
+            path: '/' # path for which the cookie is valid, default is '/'
+            secure: false # true in production, false in development (if not using HTTPS)
+            httpOnly: true # true to prevent JavaScript access to the cookie, false if you need to access it from JavaScript (e.g., for SPAs)
