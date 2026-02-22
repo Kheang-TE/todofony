@@ -5,6 +5,7 @@ namespace App\Controller\API;
 use App\DTO\TaskCreateDTO;
 use App\DTO\TaskPatchDTO;
 use App\Entity\User;
+use App\Repository\TaskRepository;
 use App\Service\AuthService;
 use App\Service\TaskService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,8 +29,38 @@ final class TaskController extends AbstractController
     {}
 
     #[Route('/tasks', name:'task', methods:['GET'])]
-    public function allTasks()
+    public function allTasks(TaskRepository $taskRepository): JsonResponse
     {
+        // Check if the user is authenticated and exists in the database
+        if(!$this->authService->existingUser($this->getUser()) || !$this->getUser() instanceof User){
+            return $this->json([
+                'message' => 'User not found'
+            ], Response::HTTP_UNAUTHORIZED); // 401 Unauthorized
+        }
+
+        try{
+
+            $user = $this->getUser();
+            $tasks = $taskRepository->findBy(
+                ['person' => $user],
+                ['updatedAt' => 'DESC']
+            );
+            return $this->json(
+                $tasks, 
+                Response::HTTP_OK, 
+                [], 
+                ['groups' => 'task:read']
+            ); // 200 OK
+
+        } catch(\Exception $e){
+
+            return $this->json([
+                'message' => 'An error occurred while retrieving tasks',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+
+        }
+
     }
 
     #[Route('/tasks/create', name:'task_create', methods:['POST'])]
