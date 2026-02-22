@@ -2,10 +2,12 @@
 
 namespace App\Service;
 
-use App\DTO\TaskDTO;
+use App\DTO\TaskCreateDTO;
+use App\DTO\TaskPatchDTO;
 use App\Entity\Task;
 use App\Entity\User;
 use App\Model\TaskStatusEnum;
+use App\Repository\TaskRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,11 +17,12 @@ final class TaskService{
 
     public function __construct(
         private ValidatorInterface $validator,
-        private EntityManagerInterface $emi
+        private TaskRepository $taskRepository,
+        private EntityManagerInterface $emi,
     )
     {}
 
-    public function validationTask(TaskDTO|Task $task): array{
+    public function validationTask(TaskCreateDTO|TaskPatchDTO|Task $task): array{
         $errors = $this->validator->validate($task);
 
         $formattedErrors = [];
@@ -33,7 +36,7 @@ final class TaskService{
         return $formattedErrors;
     }
 
-    public function newTask(TaskDTO $datas, User $user): Task|JsonResponse{
+    public function newTask(TaskCreateDTO $datas, User $user): Task|JsonResponse{
         $task = new Task();
         $task->setTitle($datas->title);
         $task->setStatus(TaskStatusEnum::TODO);
@@ -51,5 +54,24 @@ final class TaskService{
             return $task;
         }
 
+    }
+
+    public function existingTask(int $id): ?Task{
+        return $this->taskRepository->findOneById($id);
+    }
+
+    public function editTask(Task $task, TaskPatchDTO $dto): Task|JsonResponse{
+
+        $task->setStatus(TaskStatusEnum::from($dto->status));
+
+        $errors = $this->validationTask($task);
+        if($errors){
+            return new JsonResponse([
+                'errors' => $errors
+            ], Response::HTTP_UNPROCESSABLE_ENTITY); // 422 Unprocessable Entity
+        } else{
+            $this->emi->flush();
+            return $task;
+        }
     }
 }

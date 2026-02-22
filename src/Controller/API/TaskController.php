@@ -2,7 +2,9 @@
 
 namespace App\Controller\API;
 
-use App\DTO\TaskDTO;
+use App\DTO\TaskCreateDTO;
+use App\DTO\TaskPatchDTO;
+use App\Entity\User;
 use App\Service\AuthService;
 use App\Service\TaskService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,16 +19,22 @@ use Symfony\Component\Serializer\SerializerInterface;
 #[IsGranted('ROLE_USER')]
 final class TaskController extends AbstractController
 {
+
+    public function __construct(
+        private AuthService $authService
+    )
+    {}
+
     #[Route('/tasks', name:'task', methods:['GET'])]
     public function index()
     {
     }
 
     #[Route('/tasks/create', name:'task_create', methods:['POST'])]
-    public function create(Request $request, SerializerInterface $serializer, AuthService $authService, TaskService $taskService): JsonResponse{
+    public function create(Request $request, SerializerInterface $serializer, TaskService $taskService): JsonResponse{
 
         // Check if the user is authenticated and exists in the database
-        if(!$authService->existingUser($this->getUser())){
+        if(!$this->authService->existingUser($this->getUser())){
             return $this->json([
                 'message' => 'User not found'
             ], Response::HTTP_UNAUTHORIZED); // 401 Unauthorized
@@ -35,7 +43,7 @@ final class TaskController extends AbstractController
         try{
 
             // Validate the input data
-            $dto = $serializer->deserialize($request->getContent(), TaskDTO::class, 'json');
+            $dto = $serializer->deserialize($request->getContent(), TaskCreateDTO::class, 'json');
             $errors = $taskService->validationTask($dto);
             if($errors){
                 return $this->json([
@@ -60,6 +68,69 @@ final class TaskController extends AbstractController
 
             return $this->json([
                 'message' => 'An error occurred while creating the task',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+
+        }
+
+    }
+
+    #[Route('/tasks/edit/{id}', name:'task_edit', methods:['PATCH'], requirements: ['id' => '\d+'])]
+    public function edit(Request $request, SerializerInterface $serializer, TaskService $taskService): JsonResponse{
+
+        // Check if the user is authenticated and exists in the database
+        if(!$this->authService->existingUser($this->getUser()) || !$this->getUser() instanceof User){
+            return $this->json([
+                'message' => 'User not found'
+            ], Response::HTTP_UNAUTHORIZED); // 401 Unauthorized
+        }
+
+        $user = $this->getUser();
+
+        try{
+
+            // Get the task ID from the route parameters
+            $id = $request->attributes->get('id');
+
+            // Validate the input data
+            $dto = $serializer->deserialize($request->getContent(), TaskPatchDTO::class, 'json');
+            $errors = $taskService->validationTask($dto);
+            if($errors){
+                return $this->json([
+                    'errors' => $errors
+                ], Response::HTTP_UNPROCESSABLE_ENTITY); // 422 Unprocessable Entity
+            }
+            
+            // Check if the task exists
+            $task = $taskService->existingTask($id);
+            if(!$task){
+                return $this->json([
+                    'message' => 'Task not found'
+                ], Response::HTTP_NOT_FOUND); // 404 Not Found
+            }
+
+            // Check if the task belongs to the authenticated user
+            if($task->getPerson()->getId() !== $user->getId()){
+                return $this->json([
+                    'message' => 'You are not authorized to edit this task'
+                ], Response::HTTP_FORBIDDEN); // 403 Forbidden
+            }
+
+            // Edit the task
+            $editTask = $taskService->editTask($task, $dto);
+            if($editTask instanceof JsonResponse){
+                return $editTask; // Return the error response if validation failed
+            } else{
+                return $this->json([
+                    'message' => 'Task edited successfully',
+                    'task' => $editTask
+                ], Response::HTTP_OK, [], ['groups' => 'task:read']); // 200 OK
+            }
+
+        } catch(\Exception $e){
+
+            return $this->json([
+                'message' => 'An error occurred while editing the task',
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
 

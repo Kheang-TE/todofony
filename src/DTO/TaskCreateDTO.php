@@ -2,10 +2,9 @@
 
 namespace App\DTO;
 
-use App\Model\TaskStatusEnum;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class TaskDTO{
+class TaskCreateDTO{
 
     #[Assert\NotBlank()]
     public ?string $title = null;
