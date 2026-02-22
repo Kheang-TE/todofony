@@ -170,4 +170,54 @@ final class TaskController extends AbstractController
         }
 
     }
+
+    #[Route('/tasks/remove/{id}', name:'task_remove', methods:['DELETE'], requirements: ['id' => '\d+'])]
+    public function remove(Request $request): JsonResponse{
+
+        // Check if the user is authenticated and exists in the database
+        if(!$this->authService->existingUser($this->getUser()) || !$this->getUser() instanceof User){
+            return $this->json([
+                'message' => 'User not found'
+            ], Response::HTTP_UNAUTHORIZED); // 401 Unauthorized
+        }
+
+        $user = $this->getUser();
+
+        try{
+
+            // Get the task ID from the route parameters
+            $id = $request->attributes->get('id');
+
+            // Check if the task exists
+            $task = $this->taskService->existingTask($id);
+            if(!$task){
+                return $this->json([
+                    'message' => 'Task not found'
+                ], Response::HTTP_NOT_FOUND); // 404 Not Found
+            }
+
+            // Check if the task belongs to the authenticated user
+            if($task->getPerson()->getId() !== $user->getId()){
+                return $this->json([
+                    'message' => 'You are not authorized to remove this task'
+                ], Response::HTTP_FORBIDDEN); // 403 Forbidden
+            }
+
+            // Remove the task
+            $this->taskService->removeTask($task);
+
+            return $this->json([
+                'message' => 'Task removed successfully'
+            ], Response::HTTP_OK); // 200 OK
+
+        } catch(\Exception $e){
+
+            return $this->json([
+                'message' => 'An error occurred while removing the task',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+
+        }
+
+    }
 }

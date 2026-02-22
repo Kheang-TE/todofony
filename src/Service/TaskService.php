@@ -74,4 +74,9 @@ final class TaskService{
             return $task;
         }
     }
+
+    public function removeTask(Task $task): void{
+        $this->emi->remove($task);
+        $this->emi->flush();
+    }
 }
