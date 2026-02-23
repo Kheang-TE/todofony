@@ -13,4 +13,7 @@ class AuthDTO{
     #[Assert\NotBlank()]
     public ?string $password = null;
 
+     #[Assert\NotBlank()]
+    public ?string $confirmPassword = null;
+
 }

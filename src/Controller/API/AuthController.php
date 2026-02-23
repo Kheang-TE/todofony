@@ -46,6 +46,12 @@ final class AuthController extends AbstractController
             ], Response::HTTP_UNPROCESSABLE_ENTITY); // 422 Unprocessable Entity
         }
 
+        if($dto->password !== $dto->confirmPassword){
+            return $this->json([
+                'error' => 'Password and confirm password do not match'
+            ], Response::HTTP_UNPROCESSABLE_ENTITY); // 422 Unprocessable Entity
+        }
+
         // Use Authservice->registerUser for save new user
         $user = $authService->registerUser($dto);
 
@@ -63,7 +69,6 @@ final class AuthController extends AbstractController
     #[Route('/login', name:'login', methods:['POST'])]
     public function login(): JsonResponse{
 
-        // 
         return $this->json([
             'error' => 'Verify the firewall configuration. The login path is not properly defined.'
         ], Response::HTTP_UNAUTHORIZED); // 401 Unauthorized
