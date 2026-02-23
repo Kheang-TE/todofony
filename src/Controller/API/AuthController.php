@@ -88,4 +88,20 @@ final class AuthController extends AbstractController
         return $response;
     }
 
+    #[Route('/me', name:'me', methods:['GET'])]
+    public function me():JsonResponse{
+        $user = $this->getUser();
+
+        if(!$user){
+            return $this->json([
+                'error' => 'Unauthorized'
+            ], Response::HTTP_UNAUTHORIZED); // 401 Unauthorized
+        }
+
+        return $this->json([
+            'email' => $user->getUserIdentifier(),
+            'roles' => $user->getRoles()
+        ], Response::HTTP_OK); // 200 OK
+    }
+
 }
