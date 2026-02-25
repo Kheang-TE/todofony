@@ -42,6 +42,9 @@ ENV APP_ENV=prod
 # Copier le code et les dépendances depuis l'étape Composer
 COPY --from=composer_stage /app /app
 
+# Créer un .env vide pour que Symfony ne plante pas (les vraies valeurs viennent des variables Railway)
+RUN touch .env
+
 # Créer les répertoires nécessaires avec les bonnes permissions
 RUN mkdir -p var/cache var/log var/share/prod /data \
     && chmod -R 777 var /data
