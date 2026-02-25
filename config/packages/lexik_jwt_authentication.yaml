@@ -22,5 +22,5 @@ lexik_jwt_authentication:
             lifetime: 3600 # same as token_ttl
             samesite: lax # none, lax, strict
             path: '/' # path for which the cookie is valid, default is '/'
-            secure: false # true in production, false in development (if not using HTTPS)
+            secure: true # true in production, false in development (if not using HTTPS)
             httpOnly: true # true to prevent JavaScript access to the cookie, false if you need to access it from JavaScript (e.g., for SPAs)
