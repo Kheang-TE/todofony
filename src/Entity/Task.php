@@ -14,12 +14,8 @@ use Symfony\Component\Validator\Constraints as Assert;
     fields: ['title', 'person'],
     message: 'You already have a task with this title.',
 )]
-#[ORM\Table(
-    name: 'task',
-    uniqueConstraints: [
-        new ORM\UniqueConstraint(name: 'UNIQ_TASK_TITLE_PERSON', columns: ['title', 'person_id'])
-    ]
-)]
+#[ORM\Table(name: 'task')]
+#[ORM\UniqueConstraint(name: 'UNIQ_TASK_TITLE_PERSON', columns: ['title', 'person_id'])]
 class Task
 {
     #[ORM\Id]
