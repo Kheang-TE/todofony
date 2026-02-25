@@ -26,7 +26,10 @@ php bin/console cache:clear --env=prod --no-debug
 
 # --- 3. Création de la base de données SQLite (si elle n'existe pas) ---
 echo "[3/5] Vérification de la base de données..."
-php bin/console doctrine:database:create --if-not-exists --env=prod --no-interaction
+# SQLite ne supporte pas doctrine:database:create --if-not-exists
+# Il suffit de s'assurer que le répertoire existe, le fichier sera créé automatiquement
+mkdir -p "$(dirname "$(echo $DATABASE_URL | sed 's|sqlite:///||')")" 2>/dev/null || true
+php bin/console doctrine:database:create --env=prod --no-interaction 2>/dev/null || echo "  -> Base de données déjà existante ou créée automatiquement."
 
 # --- 4. Exécution des migrations ---
 echo "[4/5] Exécution des migrations..."
