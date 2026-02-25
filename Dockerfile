@@ -13,7 +13,7 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
 # ---- Étape 2 : Image de production ----
-FROM php:8.2-cli
+FROM php:8.4-cli
 
 # Installer les extensions PHP nécessaires
 RUN apt-get update && apt-get install -y \
