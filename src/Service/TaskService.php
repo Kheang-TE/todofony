@@ -62,7 +62,13 @@ final class TaskService{
 
     public function editTask(Task $task, TaskPatchDTO $dto): Task|JsonResponse{
 
-        $task->setStatus(TaskStatusEnum::from($dto->status));
+        if($dto->title){
+            $task->setTitle($dto->title);
+        }
+
+        if($dto->status){
+            $task->setStatus(TaskStatusEnum::from($dto->status));
+        }
 
         $errors = $this->validationTask($task);
         if($errors){
