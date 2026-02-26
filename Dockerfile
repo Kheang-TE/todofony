@@ -4,13 +4,20 @@ FROM composer:2 AS composer_stage
 WORKDIR /app
 COPY composer.json composer.lock* ./
 
-# Symfony a besoin de APP_ENV pour ne pas chercher de fichier .env
+# Symfony a besoin de APP_ENV et d'un fichier .env (même vide) pour fonctionner
 ENV APP_ENV=prod
+RUN touch .env
 
+# Installer les dépendances sans exécuter les scripts (pas de cache:clear pendant le build)
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
 COPY . .
-RUN composer dump-autoload --optimize --no-dev
+
+# S'assurer que le .env existe après le COPY (il est dans .gitignore donc absent du repo)
+RUN touch .env
+
+# Générer l'autoload optimisé sans scripts
+RUN composer dump-autoload --optimize --no-dev --no-scripts
 
 # ---- Étape 2 : Image de production ----
 FROM php:8.4-cli
