@@ -17,6 +17,10 @@ security:
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
 
+        api_doc:
+            pattern: ^/api/doc
+            security: false
+
         login:
             pattern: ^/api/login
             stateless: true
@@ -30,6 +34,7 @@ security:
             pattern: ^/api
             stateless: true
             jwt: ~
+
         main:
             lazy: true
             provider: app_user_provider
@@ -44,6 +49,7 @@ security:
     access_control:
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/api/doc, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

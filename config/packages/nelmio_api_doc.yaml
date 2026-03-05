@@ -1,0 +1,17 @@
+nelmio_api_doc:
+  documentation:
+    info:
+      title: Todofony API
+      description: API de gestion de tâches
+      version: 1.0.0
+    components:
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+    security:
+      - Bearer: []
+  areas:
+    path_patterns:
+      - ^/api(?!/doc$) # Exclude /api/doc from authentication
