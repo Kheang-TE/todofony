@@ -10,7 +10,7 @@ class TaskPatchDTO{
     public ?string $title = null;
 
     #[Assert\NotBlank()]
-    #[Assert\Choice(['todo', 'doing', 'done'])]
+    #[Assert\Choice(choices: ['todo', 'doing', 'done'])]
     public string $status;
 
 }
