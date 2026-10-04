@@ -22,5 +22,5 @@ lexik_jwt_authentication:
             lifetime: 3600 # same as token_ttl
             samesite: none # none requis pour les cookies cross-origin (frontend et backend sur des domaines différents)
             path: '/' # path for which the cookie is valid, default is '/'
-            secure: true # true in production, false in development (if not using HTTPS)
+            secure: '%env(bool:default::JWT_COOKIE_SECURE)%' # true en production (JWT_COOKIE_SECURE=true), false en dev
             httpOnly: true # true to prevent JavaScript access to the cookie, false if you need to access it from JavaScript (e.g., for SPAs)
