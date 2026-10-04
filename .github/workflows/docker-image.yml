@@ -1,0 +1,61 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+    - prod
+  pull_request:
+    branches:
+    - prod
+
+# Variables reutilisees pour definir le registre et le nom de l'image Docker.
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Execute les etapes de construction sur une machine virtuelle Ubuntu.
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Autorise la lecture du code source et la publication dans GHCR.
+      contents: read
+      packages: write
+
+    steps:
+      # Récupère le contenu du dépôt.
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      # Configure QEMU pour permettre la construction ARM64 sur le runner AMD64.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      # Configure Buildx avec le driver docker-container.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Authentifie GitHub Actions auprès de GitHub Container Registry.
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Met le nom de l'image en minuscules.
+      - name: Set image name
+        run: echo "IMAGE_NAME=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      # Construit et publie les images AMD64 et ARM64.
+      - name: Build and push Docker image backend
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}

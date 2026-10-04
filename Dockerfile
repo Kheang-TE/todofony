@@ -1,66 +1,30 @@
-# ---- Étape 1 : Installation des dépendances avec Composer ----
-FROM composer:2 AS composer_stage
+FROM php:8.4-cli-alpine
 
-WORKDIR /app
-COPY composer.json composer.lock* ./
+RUN apk add --no-cache icu-libs libpq \
+	&& apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev postgresql-dev \
+	&& docker-php-ext-install -j"$(nproc)" intl pdo_pgsql opcache \
+	&& apk del .build-deps
 
-# Symfony a besoin de APP_ENV et d'un fichier .env (même vide) pour fonctionner
-ENV APP_ENV=prod
-RUN touch .env
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Installer les dépendances sans exécuter les scripts (pas de cache:clear pendant le build)
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+WORKDIR /var/www/html
+
+# Installer les dépendances avant le code pour profiter du cache Docker.
+COPY composer.json composer.lock symfony.lock ./
+RUN composer install \
+	--no-dev \
+	--prefer-dist \
+	--no-interaction \
+	--no-progress \
+	--optimize-autoloader \
+	--classmap-authoritative \
+	--no-scripts
 
 COPY . .
 
-# S'assurer que le .env existe après le COPY (il est dans .gitignore donc absent du repo)
-RUN touch .env
+ENV APP_ENV=prod \
+	APP_DEBUG=0
 
-# Générer l'autoload optimisé sans scripts
-RUN composer dump-autoload --optimize --no-dev --no-scripts
-
-# ---- Étape 2 : Image de production ----
-FROM php:8.4-cli
-
-# Installer les extensions PHP nécessaires
-RUN apt-get update && apt-get install -y \
-    libsqlite3-dev \
-    libicu-dev \
-    libzip-dev \
-    unzip \
-    && docker-php-ext-install \
-    pdo_sqlite \
-    intl \
-    zip \
-    opcache \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Configuration OPcache pour la production
-RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini
-
-WORKDIR /app
-
-# Définir APP_ENV=prod pour que Symfony n'ait pas besoin de fichier .env
-ENV APP_ENV=prod
-
-# Copier le code et les dépendances depuis l'étape Composer
-COPY --from=composer_stage /app /app
-
-# Créer un .env vide pour que Symfony ne plante pas (les vraies valeurs viennent des variables Railway)
-RUN touch .env
-
-# Créer les répertoires nécessaires avec les bonnes permissions
-RUN mkdir -p var/cache var/log var/share/prod /data \
-    && chmod -R 777 var /data
-
-# Rendre le script de démarrage exécutable
-RUN chmod +x start.sh
-
-# Exposer le port (Railway injecte $PORT automatiquement)
 EXPOSE 8080
 
-# Commande de démarrage
-CMD ["sh", "start.sh"]
+CMD ["sh", "-c", "exec php -S 0.0.0.0:${PORT:-8080} -t public"]

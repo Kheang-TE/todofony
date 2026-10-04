@@ -1,14 +1,35 @@
+# =============================================================================
+# .dockerignore - Fichiers EXCLUS du contexte de build Docker
+# But : ne jamais embarquer de secrets ni d'artefacts locaux dans l'image.
+# =============================================================================
+
+# --- Secrets & configuration locale (à NE JAMAIS mettre dans l'image) --------
+.env
+.env.*
+config/secrets/
+
+# --- Clés JWT : générées une fois, injectées au runtime sur le serveur --------
+config/jwt/*.pem
+
+# --- Dépendances et cache locaux (reconstruits dans l'image) -----------------
 /vendor/
 /var/
-/config/jwt/*.pem
-/.env.local
-/.env.local.php
-/.env.*.local
-/phpunit.xml
-/.phpunit.cache/
+
+
+# --- Artefacts générés (reconstruits au build ou au runtime) -----------------
+/public/bundles/
 /public/assets/
 /assets/vendor/
-/node_modules/
-/.git/
-/.idea/
-/.vscode/
+
+# --- Versioning & divers -----------------------------------------------------
+.git/
+.gitignore
+.editorconfig
+README.md
+Dockerfile
+.dockerignore
+
+# --- Outils de développement (pas nécessaires à l'image) ---------------------
+tests/
+phpunit.xml
+.phpunit.cache/
