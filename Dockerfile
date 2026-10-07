@@ -33,8 +33,11 @@ RUN composer install \
 # le cache local, vendor et les cles JWT PEM presentes sur la machine de build.
 COPY . .
 
-# Creer les dossiers necessaires et les rendre accessibles a l'utilisateur PHP.
-RUN mkdir -p var/cache var/log config/jwt \
+# Symfony Runtime appelle Dotenv meme lorsque la configuration vient des variables
+# d'environnement du conteneur ; fournir un fichier vide evite une PathException.
+# Creer aussi les dossiers necessaires et les rendre accessibles a l'utilisateur PHP.
+RUN touch .env \
+	&& mkdir -p var/cache var/log config/jwt \
 	&& chown -R www-data:www-data var config/jwt
 
 # Installer le script qui generera les cles JWT au demarrage du conteneur.
