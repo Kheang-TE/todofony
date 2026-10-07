@@ -20,15 +20,15 @@ if [ "$(dirname "$public_key")" != "$key_dir" ]; then
 	exit 1
 fi
 
-# Creer les dossiers necessaires en tant que www-data, sans modifier les proprietaires.
+# Creer les dossiers necessaires en tant que www-data, sans changer d'utilisateur.
 # Le dossier de base SQLite est place dans var, qui doit aussi etre accessible en ecriture.
-if ! su-exec www-data mkdir -p "$key_dir" /var/www/html/var/cache /var/www/html/var/log; then
+if ! mkdir -p "$key_dir" /var/www/html/var/cache /var/www/html/var/log; then
 	echo "JWT and SQLite volumes must be writable by www-data (UID 82). Use named Docker volumes or fix host directory permissions." >&2
 	exit 1
 fi
 
 # Verifier les droits reellement disponibles pour l'utilisateur qui executera Symfony.
-if ! su-exec www-data test -w "$key_dir" || ! su-exec www-data test -w /var/www/html/var; then
+if ! test -w "$key_dir" || ! test -w /var/www/html/var; then
 	echo "JWT and SQLite volumes must be writable by www-data (UID 82). Use named Docker volumes or fix host directory permissions." >&2
 	exit 1
 fi
@@ -41,31 +41,31 @@ elif [ ! -e "$private_key" ] && [ ! -e "$public_key" ]; then
 	echo "Generating JWT key pair..."
 	# Les nouveaux fichiers temporaires sont prives par defaut (droits 600).
 	umask 077
-	private_tmp=$(su-exec www-data mktemp "$key_dir/.private.XXXXXX")
-	public_tmp=$(su-exec www-data mktemp "$key_dir/.public.XXXXXX")
+	private_tmp=$(mktemp "$key_dir/.private.XXXXXX")
+	public_tmp=$(mktemp "$key_dir/.public.XXXXXX")
 	# Supprimer les fichiers temporaires si OpenSSL echoue ou si le conteneur est interrompu.
-	trap 'su-exec www-data rm -f "$private_tmp" "$public_tmp"' EXIT HUP INT TERM
+	trap 'rm -f "$private_tmp" "$public_tmp"' EXIT HUP INT TERM
 
 	# Creer une cle RSA de 4096 bits, chiffree avec JWT_PASSPHRASE.
-	su-exec www-data openssl genpkey \
+	openssl genpkey \
 		-algorithm RSA \
 		-aes-256-cbc \
 		-pass env:JWT_PASSPHRASE \
 		-pkeyopt rsa_keygen_bits:4096 \
 		-out "$private_tmp"
 	# Deriver et enregistrer la cle publique correspondante.
-	su-exec www-data openssl pkey \
+	openssl pkey \
 		-in "$private_tmp" \
 		-passin env:JWT_PASSPHRASE \
 		-pubout \
 		-out "$public_tmp"
 
 	# Restreindre l'acces a la cle privee ; la cle publique peut etre lisible par tous.
-	su-exec www-data chmod 600 "$private_tmp"
-	su-exec www-data chmod 644 "$public_tmp"
+	chmod 600 "$private_tmp"
+	chmod 644 "$public_tmp"
 	# Deplacer les deux fichiers temporaires vers leurs chemins definitifs dans le volume.
-	su-exec www-data mv "$private_tmp" "$private_key"
-	su-exec www-data mv "$public_tmp" "$public_key"
+	mv "$private_tmp" "$private_key"
+	mv "$public_tmp" "$public_key"
 	# Les fichiers temporaires ont ete deplaces ; desactiver leur nettoyage automatique.
 	trap - EXIT HUP INT TERM
 else
@@ -75,10 +75,10 @@ else
 fi
 
 # Verifier que le compte Symfony peut lire les deux cles avant son lancement.
-if ! su-exec www-data test -r "$private_key" || ! su-exec www-data test -r "$public_key"; then
+if ! test -r "$private_key" || ! test -r "$public_key"; then
 	echo "JWT key files must be readable by www-data (UID 82)." >&2
 	exit 1
 fi
 
 # Remplacer le script par le processus PHP, execute sous le compte non privilegie.
-exec su-exec www-data "$@"
+exec "$@"

@@ -3,7 +3,7 @@ FROM php:8.4-cli-alpine
 
 # Installer les bibliotheques utilisees a l'execution, compiler les extensions PHP
 # necessaires a Symfony et SQLite, puis supprimer les outils de compilation.
-RUN apk add --no-cache icu-libs sqlite-libs openssl su-exec \
+RUN apk add --no-cache icu-libs sqlite-libs openssl \
 	&& apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev sqlite-dev \
 	&& docker-php-ext-install -j"$(nproc)" intl opcache pdo_sqlite \
 	&& apk del .build-deps
@@ -54,6 +54,10 @@ ENV APP_ENV=prod \
 	JWT_COOKIE_SECURE=1 \
 	JWT_SECRET_KEY=/var/www/html/config/jwt/private.pem \
 	JWT_PUBLIC_KEY=/var/www/html/config/jwt/public.pem
+
+# Executer directement le conteneur sous le compte non privilegie qui possede
+# les dossiers var/ et config/jwt/ prepares pendant le build.
+USER www-data
 
 # Documenter le port HTTP utilise par le serveur PHP et le reverse proxy Caddy.
 EXPOSE 8000
