@@ -33,6 +33,14 @@ RUN composer install \
 # le cache local, vendor et les cles JWT PEM presentes sur la machine de build.
 COPY . .
 
+# Le premier autoloader a ete genere avant src/ ; le regenerer maintenant que
+# les classes de l'application sont presentes, surtout en mode classmap authoritative.
+RUN composer dump-autoload \
+	--no-dev \
+	--optimize \
+	--classmap-authoritative \
+	--no-scripts
+
 # Symfony Runtime appelle Dotenv meme lorsque la configuration vient des variables
 # d'environnement du conteneur ; fournir un fichier vide evite une PathException.
 # Creer aussi les dossiers necessaires et les rendre accessibles a l'utilisateur PHP.
