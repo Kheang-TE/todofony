@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api', name:'api_')]
@@ -18,24 +19,20 @@ final class AuthController extends AbstractController
     #[Route('/register', name:'register', methods:['POST'])]
     public function register(Request $request, SerializerInterface $serializer, AuthService $authService): JsonResponse
     {
-        try{
-
-            // Deserialize JSON to DTO
+        try {
             $dto = $serializer->deserialize($request->getContent(), AuthDTO::class, 'json');
+        } catch (ExceptionInterface $e) {
+            return $this->json(
+                ['error' => 'Invalid JSON format'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
 
-            $existingUser = $authService->existingUser($dto);
-            if($existingUser){
-                return $this->json([
-                    'error' => 'Email already exists'
-                ], Response::HTTP_CONFLICT); // 409 Conflict
-            }
-
-        } catch(\Exception $e){
-
+        $existingUser = $authService->existingUser($dto);
+        if ($existingUser) {
             return $this->json([
-                'error' => 'Invalid JSON format'
-            ], Response::HTTP_BAD_REQUEST); // 400 Bad Request
-
+                'error' => 'Email already exists'
+            ], Response::HTTP_CONFLICT); // 409 Conflict
         }
 
         // Datas DTO Validation
