@@ -6,7 +6,6 @@ use App\DTO\AuthDTO;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -16,7 +15,6 @@ class AuthService{
         private ValidatorInterface $validator,
         private UserRepository $userRepository,
         private UserPasswordHasherInterface $hasher,
-        private JWTTokenManagerInterface $jwtManager,
         private EntityManagerInterface $emi
     ){}
 
@@ -40,6 +38,8 @@ class AuthService{
         } else if($user instanceof User){
             return $this->userRepository->findOneBy(['email' => strtolower(trim($user->getEmail()))]);
         }
+
+        return null;
     }
 
     public function registerUser(AuthDTO $dto):User{

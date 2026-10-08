@@ -80,5 +80,8 @@ if ! test -r "$private_key" || ! test -r "$public_key"; then
 	exit 1
 fi
 
+# Create or upgrade the database schema before accepting API requests.
+php /var/www/html/bin/console doctrine:migrations:migrate --no-interaction
+
 # Remplacer le script par le processus PHP, execute sous le compte non privilegie.
 exec "$@"
